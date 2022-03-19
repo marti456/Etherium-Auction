@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+  	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+
+
+
+    <script src="./node_modules/web3/dist/web3.min.js"></script>
+    <script src="./node_modules/@metamask/detect-provider/dist/detect-provider.min.js"></script>
+
+   	<script type="text/javascript">
+   	// Source code to interact with smart contract
+
+		var sellersCount;
+
+		async function loadWeb3() {
+		    if (window.ethereum) {
+		        window.web3 = new Web3(window.ethereum);
+		        window.ethereum.enable();
+		    }
+		}
+
+		async function loadAuctionCreator() {
+		    await loadWeb3();
+		    window.contract = await loadContract();
+		    //updateStatus('Ready!');
+		}
+
+		async function loadAuction(auctionAddress){
+				await loadWeb3();
+		    window.contract = await loadGivenAuction(auctionAddress);
+		}
+
+		function updateStatus(status) {
+		    console.log(status);
+		}
+
+		async function loadContract() {
+			var contractAddress = '0x3D0Ea5e3fdEBcd5dd019E700929629Ed86c4E3FD';
+
+			var abi = JSON.parse( '[{"inputs":[{"internalType":"string","name":"imageHashes","type":"string"}],"name":"createAuction","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"auctions","outputs":[{"internalType":"contract Auction","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"auctionsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"seller","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"getAuctionAddress","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"sellers","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sellersCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]	' );
+
+		  return await new window.web3.eth.Contract(abi, contractAddress);
+		}
+
+		async function loadGivenAuction(auctionAddress) {
+			var auctionAbi = JSON.parse( '[{"inputs":[{"internalType":"address payable","name":"eoa","type":"address"},{"internalType":"string","name":"_imagesHashes","type":"string"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[],"name":"auctionState","outputs":[{"internalType":"enum Auction.State","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"bids","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"cancelAuction","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"description","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"endBlock","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"finalizeAuction","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"highestBidder","outputs":[{"internalType":"address payable","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"highestBindingBid","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"ipfsHashes","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address payable","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"ownerFinalized","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"placeBid","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"string","name":"_description","type":"string"}],"name":"setDescription","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"string","name":"_title","type":"string"}],"name":"setTitle","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"startBlock","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"title","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"}]' );
+			return await new window.web3.eth.Contract(auctionAbi, auctionAddress);
+		}
+
+		async function getCurrentAccount() {
+		    const accounts = await window.web3.eth.getAccounts();
+		    return accounts[0];
+		}
+
+		loadAuctionCreator();
+	  
+		function openCreateAuctionHTML(){
+			window.location.href = "uploadImage.html"
+		}
+
+		async function create_auction(){
+			const account = await getCurrentAccount();
+			console.log(account);
+			var result = await window.contract.methods.createAuction().send({from: account});
+			//console.log(result);
+
+			/*contract.methods.createAuction().call().then( function( info ) {
+		    	console.log("info: ", info);
+		    	document.getElementById('result').innerHTML = "Created new Auction: " + info;
+	  		});*/
+		}
+
+		async function show_auction(auctionAddress){
+			var divs = document.getElementsByClassName('main');
+			for (var div of divs){
+				div.style.display = 'none';
+			}
+
+			/*var auctionAddress;
+			await window.contract.methods.sellers(index).call(function(err, res){
+    		auctionAddress = res;
+			});*/
+
+			//console.log(index, auctionAddress);
+
+			console.log(auctionAddress);
+			await loadAuction(auctionAddress);
+
+			var auctionOwner, auctionState;
+
+			await window.contract.methods.owner().call(function(err, res){
+    		auctionOwner = res;
+			});
+
+			await window.contract.methods.auctionState().call(function(err, res){
+    		auctionState = res;
+			});
+
+			document.write(auctionOwner + '\n' + auctionState);
+			
+		}
+
+		async function show_auctions(){
+			const account = await getCurrentAccount();
+			await window.contract.methods.sellersCount().call(function(err, res){
+    		sellersCount = res;
+			});
+
+			console.log(sellersCount);
+			var auctionsList = document.getElementById("listAuctions");
+			var auctionId = 1;
+			for (var i = 0; i < sellersCount; i++){
+				var currSeller;
+				var numberOfSellerAuctions;
+
+				await window.contract.methods.sellers(i).call(function(err, res){
+    			currSeller = res;
+				})
+				//console.log(currSeller);
+				await window.contract.methods.auctionsCount(currSeller).call(function(err, res){
+    			numberOfSellerAuctions = res;
+				});
+				//console.log(numberOfSellerAuctions);
+				for(var j = 0; j < numberOfSellerAuctions; j++){
+					var auction = document.createElement("li");
+					var auctionAddress;
+					await window.contract.methods.getAuctionAddress(currSeller, j).call(function(err, res){
+	    			auctionAddress = res;
+					});
+
+					
+					console.log(auctionAddress);
+
+					//var onclickAuction = new String("show_auction( " + auctionAddress + " )")
+
+					//auction.setAttribute("onclick", onclickAuction);
+					auction.onclick = function() {show_auction(String(auctionAddress));};
+					auction.appendChild(document.createTextNode("Auction" + (auctionId)));
+					//auctionsList.innerHTML = '<li><a href="">Auction ' + (i+1) + '</a></li>';
+					auctionsList.appendChild(auction);
+
+					auctionId++;
+				}
+			}
+		}
+
+		show_auctions();
+		console.log("Auctions are showed");
+
+
+
+   	</script>
+
+	<title></title>
+</head>
+<body>
+
+	<div class="main">
+		<button id="createAuction" onclick="openCreateAuctionHTML()" class="btn btn-primary">Create new auction</button>
+
+		<p id="result"></p>
+	</div>
+	
+
+	<div class="main" id="auctions">
+		<ul id="listAuctions">
+
+		</ul>
+	</div>
+</body>
+</html>

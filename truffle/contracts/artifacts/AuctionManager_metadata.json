@@ -1,0 +1,173 @@
+{
+	"compiler": {
+		"version": "0.8.7+commit.e28d00a7"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"anonymous": false,
+				"inputs": [
+					{
+						"indexed": false,
+						"internalType": "address",
+						"name": "_address",
+						"type": "address"
+					}
+				],
+				"name": "AuctionCreated",
+				"type": "event"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "auctions",
+				"outputs": [
+					{
+						"internalType": "contract Auction",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"name": "auctionsCount",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "createAuction",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "seller",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "index",
+						"type": "uint256"
+					}
+				],
+				"name": "getAuctionAddress",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"name": "sellers",
+				"outputs": [
+					{
+						"internalType": "address",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [],
+				"name": "sellersCount",
+				"outputs": [
+					{
+						"internalType": "uint256",
+						"name": "",
+						"type": "uint256"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"work/SmartContracts/Etherium_Auction/truffle/contracts/AuctionManager.sol": "AuctionManager"
+		},
+		"evmVersion": "london",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"work/SmartContracts/Etherium_Auction/truffle/contracts/Auction.sol": {
+			"keccak256": "0x1e393d03f3396b3fd8b6667391a6c9febd6d8fc9104e0fba3d6b88627f46dbdb",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://ab31995f8fba1da44da0790766d4fa2fcbaaefaa7f41822f1988f7b586b14c3a",
+				"dweb:/ipfs/QmR8qGak2XRL3o2ok19rez28AQXt6Co6Z4pPsKtpN4kbVA"
+			]
+		},
+		"work/SmartContracts/Etherium_Auction/truffle/contracts/AuctionManager.sol": {
+			"keccak256": "0x5a3a6ef3ed3b62233d111d6aa91275af3df3f32f0d14c139413fa278d379ec5a",
+			"license": "GPL-3.0",
+			"urls": [
+				"bzz-raw://d89aab1aa38e23bd32076a7fba2b3d122cc2e3b56379eb887d42caf81a0162ba",
+				"dweb:/ipfs/QmZi6vR1jH6joyFVr3JV4ojZ6kNQmrX6YwFz987bgKM46Y"
+			]
+		}
+	},
+	"version": 1
+}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/moralis/dist/moralis.js"></script>
+  <script src="./node_modules/web3/dist/web3.min.js"></script>
+  <script src="./node_modules/@metamask/detect-provider/dist/detect-provider.min.js"></script>
+
+  <script type="text/javascript">
+
+    async function login(){
+      var user = await Moralis.Web3.authenticate();
+      if (user){
+        console.log("successfull login");
+      }
+    }
+
+    async function uploadImage() {
+      let files = document.getElementById('formFile').files;
+      let readers = [];
+      ipfsHashes = [];
+
+      // Abort if there were no files selected
+      if(!files.length) return;
+
+      // Store promises in array
+      for(let i = 0;i < files.length;i++){
+        readers.push(await readFileAsText(files[i]));
+      }
+                
+      // Trigger Promises
+      Promise.all(readers).then((values) => {  
+        console.log(values);
+        //ipfsHashes.join();
+
+        create_auction(values.toString());
+      });
+
+
+      
+
+      /*let reader = new FileReader();
+      
+
+      const image = document.getElementById('formFile');
+
+      reader.readAsDataURL(image.files[0]);
+
+      let buf;
+      reader.onload = async function() {
+        buf = reader.result;
+        console.log(buf);
+        console.log(image.value, buf)
+        const file = new Moralis.File("imageName", {base64: buf})
+        await file.saveIPFS();
+
+        console.log(file.ipfs());
+
+        create_auction();
+      };*/
+    }
+
+    function readFileAsText(file){
+      return new Promise(function(resolve,reject){
+        let fr = new FileReader();
+        fr.readAsDataURL(file);
+
+        fr.onload = async function(){
+          fr.result;
+          buf = fr.result;
+          const file = new Moralis.File("imageName", {base64: buf})
+          await file.saveIPFS();
+          console.log(file.ipfs());
+          ipfsHashes.push(file.ipfs());
+          resolve(file.ipfs());
+        };
+      }); 
+
+    }
+
+    async function create_auction(ipfsHashesString){
+      const account = await getCurrentAccount();
+      console.log(account);
+      console.log(ipfsHashesString, typeof(ipfsHashesString));
+      
+      var result = await window.contract.methods.createAuction(ipfsHashesString).send({from: account});
+
+      //console.log(result);
+
+      /*contract.methods.createAuction().call().then( function( info ) {
+          console.log("info: ", info);
+          document.getElementById('result').innerHTML = "Created new Auction: " + info;
+        });*/
+    }
+
+    async function getCurrentAccount() {
+        const accounts = await window.web3.eth.getAccounts();
+        return accounts[0];
+    }
+
+    async function loadContract() {
+      var contractAddress = '0x3D0Ea5e3fdEBcd5dd019E700929629Ed86c4E3FD';
+
+      var abi = JSON.parse( '[{"inputs":[{"internalType":"string","name":"imageHashes","type":"string"}],"name":"createAuction","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"auctions","outputs":[{"internalType":"contract Auction","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"auctionsCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"seller","type":"address"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"getAuctionAddress","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"sellers","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sellersCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}]' );
+
+      return await new window.web3.eth.Contract(abi, contractAddress);
+    }
+
+    async function loadAuctionCreator() {
+        window.contract = await loadContract();
+        //updateStatus('Ready!');
+    }
+
+
+
+    let ipfsHashes = [];
+
+    const serverUrl = "https://mntv9lfhen4r.usemoralis.com:2053/server";
+    const appId = "OLqNLYhM6D6LYLHlVyV9M3h9kH1kDm0KYt8vakfT";
+    Moralis.start({ serverUrl, appId });
+
+    login();
+
+    if (window.ethereum) {
+      window.web3 = new Web3(window.ethereum);
+      window.ethereum.enable();
+    }
+
+    loadAuctionCreator();
+    
+  </script>
+
+  <title></title>
+</head>
+<body>
+
+  <div class="mb-3">
+    <label for="formFile" class="form-label">Default file input example</label>
+    <input class="form-control" type="file" id="formFile" multiple />
+  </div>
+
+  <button id="buttonUpload" onclick="uploadImage()" class="btn btn-primary">Submit</button>
+
+
+
+
+</body>
+</html>
