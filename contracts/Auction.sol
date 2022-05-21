@@ -138,10 +138,13 @@ contract Auction{
     } 
     
     function finalizeAuction() public {
-        // the auction has been Canceled or Ended
-        require(auctionState == State.Canceled || block.timestamp > endDate); 
         // only the owner or a bidder can cancel the auction
         require((msg.sender == owner && ownerFinalized == false) || bids[msg.sender] > 0);
+        // the auction has been Canceled or Ended
+        if(auctionState == State.Canceled || block.timestamp > endDate){
+            auctionState = State.Ended;
+        }
+
         // the recipient will get the value
         address payable recipient;
         uint value;

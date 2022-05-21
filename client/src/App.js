@@ -9,23 +9,23 @@ import momentDurationFormatSetup from 'moment-duration-format';
 
 // single entry of auction lists
 class AuctionComponent extends React.Component {
-  formatedLeftTime = (endDate) => {
-    var now  = new Date();
-    var LeftMs = moment(endDate, "DD/MM/YYYY HH:mm:ss").diff(moment(now, "DD/MM/YYYY HH:mm:ss"));
-    var dur = moment.duration(LeftMs);
-    if (LeftMs < 0){ //Check if auction isn't running
-      return null;
-    }
-    else if(LeftMs < 60*60*1000){ //Check if left time is under 1 hour
-      return dur.format("m[m] s[s]");
-    }
-    else if (LeftMs < 24*60*60*1000){ //Check if left time is under 1 day
-      return dur.format("h[h] m[m]");
-    }
-    else{
-      return dur.format("d[d] h[h]");
-    } 
-  }
+  // formatedLeftTime = (endDate) => {
+  //   var now  = new Date();
+  //   var LeftMs = moment(endDate, "DD/MM/YYYY HH:mm:ss").diff(moment(now, "DD/MM/YYYY HH:mm:ss"));
+  //   var dur = moment.duration(LeftMs);
+  //   if (LeftMs < 0){ //Check if auction isn't running
+  //     return null;
+  //   }
+  //   else if(LeftMs < 60*60*1000){ //Check if left time is under 1 hour
+  //     return dur.format("m[m] s[s]");
+  //   }
+  //   else if (LeftMs < 24*60*60*1000){ //Check if left time is under 1 day
+  //     return dur.format("h[h] m[m]");
+  //   }
+  //   else{
+  //     return dur.format("d[d] h[h]");
+  //   } 
+  // }
 
   render() {
     return (
@@ -37,8 +37,8 @@ class AuctionComponent extends React.Component {
           <h3 className="card-text">Last bid: {this.props.web3.utils.fromWei(this.props.auction.highestBindingBid)} ETH</h3>
         </div>
         <div className="card-footer">
-          {this.formatedLeftTime(this.props.auction.endDate) != null && <small className="text-muted">Left: {this.formatedLeftTime(this.props.auction.endDate)} </small> }
-          {this.formatedLeftTime(this.props.auction.endDate) == null && <small className="text-muted">Auction isn't running </small> }
+          {formatedLeftTime(this.props.auction.endDate) != null && <small className="text-muted">Left: {formatedLeftTime(this.props.auction.endDate)} </small> }
+          {formatedLeftTime(this.props.auction.endDate) == null && <small className="text-muted">Auction isn't running </small> }
         </div>
       </div>
       </div>
@@ -73,12 +73,12 @@ class App extends Component {
   state = { loaded: false, sellersCount: "unknown", 
             auctionsCount: "unknown", currentAccount: "unknown", 
             AllAuctions: [], currentAuction: null,
-            abid: "", createAuctionPage: false };
+            abid: "", createAuctionPage: false, auctionStatesList: ["Created", "Running", "Ended", "Canceled"] };
 
   constructor(props){
     super(props);
-    const serverUrl = "https://0iinwlwczi0j.usemoralis.com:2053/server";
-    const appId = "gNIwSF9VQi65eGgal6q4JzV4mGGGuJcuPgmErLtv";
+    const serverUrl = "https://barcf53jhik4.usemoralis.com:2053/server";
+    const appId = "NHQC5Yuf3dWJauE8LEkDS3izPEUzceAlkWIe2Amp";
     window.Moralis.start({ serverUrl, appId });
     momentDurationFormatSetup(moment);
     window.Moralis.authenticate() 
@@ -161,6 +161,7 @@ class App extends Component {
     this.clearTimers();
     const responseSellersCount = await this.auctionManager.methods.sellersCount().call();
     const responseAuctionsCount = await this.auctionManager.methods.auctionsCount(this.accounts[0]).call();
+    
     //const responseAuctionState = await this.auctionManager.methods.auctionState().call();
     await this.readAllAuctions();
     // Update state with the result.
@@ -171,7 +172,7 @@ class App extends Component {
     const account = this.accounts[0];
     let result = await this.auctionManager.methods.createAuction().send({from: account});
     console.log(result);
-    window.Moralis.authenticate()
+    //window.Moralis.authenticate()
     //this.setState( {createAuctionPage: true} )
   }
 
@@ -273,6 +274,11 @@ class App extends Component {
     let aendtime = tomorrow.toLocaleDateString('en-CA') + "T" + ('0' +today.getHours()).slice(-2) + ":" + ('0' + today.getMinutes()).slice(-2);
     //Set min time for the input box
     let aminEndTime = today.toLocaleDateString('en-CA') + "T" + ('0' +today.getHours()).slice(-2) + ":" + ('0' + today.getMinutes()).slice(-2);
+
+    if(auction.state == 1 && formatedLeftTime(auction.endDate) == null){
+      auction.state = 2
+    }
+
     this.setState( {currentAuction: auction, atitle: auction.title, adesc: auction.description, endtime: aendtime, minEndTime: aminEndTime} )
   }
 
@@ -333,7 +339,10 @@ class App extends Component {
   handleBid = async () => {
     this.listenToAuctionUpdatedEvent(this.state.currentAuction.contract);
     let valueInWei = this.web3.utils.toWei(this.state.abid, 'ether');
-    if (valueInWei < 0 || valueInWei < this.state.currentAuction.highestBindingBid + 500000000000000){
+    if (valueInWei <= parseInt(this.state.currentAuction.highestBindingBid) + 500000000000000){
+      console.log("highest bid + 500...: ", this.state.currentAuction.highestBindingBid + 500000000000000)
+      console.log("value in Wei: " + valueInWei);
+      console.log("Highest bid till now: " + this.state.currentAuction.highestBindingBid);
       alert("Bid should be greater than 0 and minimum 0,0005ETH bigger than the last bid");
     }
     else{
@@ -354,22 +363,24 @@ class App extends Component {
     }
     if (this.state.currentAuction == null) {
       return (
-        <div className="MainApp">
+        <div className="MainApp" >
           <AuctionTitle title="Auction" />
-          <div>
-            <h2>My auctions</h2>
-            <AuctionList list={this.state.AllAuctions} filter={auction => auction.seller === this.accounts[0]} handler={this.handleClickGotoAuction} web3={this.web3} />
-            <button className="btn btn-primary" type="button" onClick={ () => this.handleNewAuctionPage() }>Create new Auction</button>
-            <br/><br/>
-          </div>
-          <div>
-            <h2>Other auctions</h2>
-            <AuctionList list={this.state.AllAuctions} filter={auction => (auction.seller !== this.accounts[0]) && (auction.state == 1 || auction.state == 2 )} handler={this.handleClickGotoAuction} web3={this.web3}/>
-          </div>
-          <div className="mb-3 mt-3">
-            <div>Sellers count: {this.state.sellersCount}</div>
-            <div>My auctions count: {this.state.auctionsCount}</div>
-            <div>Current account: {this.state.currentAccount}</div>
+          <div style={{marginLeft: 25 + "px"}}>
+            <div>
+              <h2>My auctions</h2>
+              <AuctionList list={this.state.AllAuctions} filter={auction => auction.seller === this.accounts[0]} handler={this.handleClickGotoAuction} web3={this.web3} />
+              <button style={{marginTop: 25 + "px"}} className="btn btn-primary" type="button" onClick={ () => this.handleNewAuctionPage() }>Create new Auction</button>
+              <br/><br/>
+            </div>
+            <div>
+              <h2>Other auctions</h2>
+              <AuctionList list={this.state.AllAuctions} filter={auction => (auction.seller !== this.accounts[0]) && (auction.state == 1 || auction.state == 2 )} handler={this.handleClickGotoAuction} web3={this.web3}/>
+            </div>
+            <div className="mb-3 mt-3">
+              <div>Sellers count: {this.state.sellersCount}</div>
+              <div>My auctions count: {this.state.auctionsCount}</div>
+              <div>Current account: {this.state.currentAccount}</div>
+            </div>
           </div>
         </div>
       );
@@ -377,47 +388,49 @@ class App extends Component {
       return (
         <div className="AuctionEdit">
           <AuctionTitle title="Edit Auction" />
-          <div className="mb-3 mt-3">
-            <label className="form-label">Title:</label>
-            <input className="form-control" placeholder="Enter title" type="text" id="atitle" name="atitle" onChange={this.handleInputChange} value={ this.state.atitle } />
-          </div>
-          <div className="mb-3 mt-3">
-            <label className="form-label">Description:</label>
-            <textarea className="form-control" placeholder="Enter description" rows="5" name="adesc" id="adesc" onChange={this.handleInputChange} value={ this.state.adesc }></textarea><br/>
-          </div>
-          <div className="row">
-          {this.state.currentAuction.ipfsHashes.map(imageHash => (
-            <div className="col-md-4" key={imageHash} >
-              <img style={{width: "100%", maxWidth: "300px"}} className="img-responsive" src={imageHash} alt={imageHash}/>
-            </div> 
-          ))}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Images</label>
-            <input className="form-control" type="file" id="imageFiles" name="imageFiles" ref={(ref) => this.imageFiles = ref} multiple />
-          </div>
-          <div className="mb-3">
-            <p>End: {this.state.currentAuction.endDate.toString()}</p>
-          </div>
-          <label>Update end:</label>
-          <input type="datetime-local" id="endtime" name="endtime" onChange={this.handleInputChange} value={ this.state.endtime } min={this.state.minEndTime} />
-          <div className="mb-3">
-            <p>Auction State: {this.state.currentAuction.state}</p>
-          </div>
-          { this.state.currentAuction.highestBindingBid > 0 &&
-            <div className="mb-3">Highest bid: {this.web3.utils.fromWei(this.state.currentAuction.highestBindingBid)} ETH from {this.state.currentAuction.highestBidder}</div>
-          }
-          <button className="btn btn-primary" type="button" onClick={ () => this.handleUpdate() }>Update Auction</button>
-          <div className="mb-3 mt-3">
-            <button className="btn btn-danger" type="button" onClick={ () => this.handleCancel() }>Cancel Auction</button>&nbsp;
-            { this.state.currentAuction.canFinalize &&
-              <span>
-                <button className="btn btn-warning" type="button" onClick={ () => this.handleFinalize() }>Finalize Auction</button>&nbsp;
-              </span>
+          <div style={{marginLeft: 25 + "px"}}>
+            <div className="mb-3 mt-3">
+              <label className="form-label">Title:</label>
+              <input className="form-control" placeholder="Enter title" type="text" id="atitle" name="atitle" onChange={this.handleInputChange} value={ this.state.atitle } />
+            </div>
+            <div className="mb-3 mt-3">
+              <label className="form-label">Description:</label>
+              <textarea className="form-control" placeholder="Enter description" rows="5" name="adesc" id="adesc" onChange={this.handleInputChange} value={ this.state.adesc }></textarea><br/>
+            </div>
+            <div className="row">
+            {this.state.currentAuction.ipfsHashes.map(imageHash => (
+              <div className="col-md-4" key={imageHash} >
+                <img style={{width: "100%", maxWidth: "300px"}} className="img-responsive" src={imageHash} alt={imageHash}/>
+              </div> 
+            ))}
+            </div>
+            <div className="mb-3">
+              <label className="form-label">Images</label>
+              <input className="form-control" type="file" id="imageFiles" name="imageFiles" ref={(ref) => this.imageFiles = ref} multiple />
+            </div>
+            <div className="mb-3">
+              <p>End: {this.state.currentAuction.endDate.toString()}</p>
+            </div>
+            <label>Update end:</label>
+            <input type="datetime-local" id="endtime" name="endtime" onChange={this.handleInputChange} value={ this.state.endtime } min={this.state.minEndTime} />
+            <div className="mb-3">
+              <p>Auction State: {this.state.auctionStatesList[this.state.currentAuction.state]}</p>
+            </div>
+            { this.state.currentAuction.highestBindingBid > 0 &&
+              <div className="mb-3">Highest bid: {this.web3.utils.fromWei(this.state.currentAuction.highestBindingBid)} ETH from {this.state.currentAuction.highestBidder}</div>
             }
-            <button className="btn btn-info" type="button" onClick={ () => this.setState( {currentAuction: null} )}>Back</button>&nbsp;
-            <div>Current account: {this.state.currentAccount}</div>
-            <div>Contract address: {this.state.currentAuction.address}</div>
+            <button className="btn btn-primary" type="button" onClick={ () => this.handleUpdate() }>Update Auction</button>
+            <div className="mb-3 mt-3">
+              <button className="btn btn-danger" type="button" onClick={ () => this.handleCancel() }>Cancel Auction</button>&nbsp;
+              { this.state.currentAuction.state >= 2 &&
+                <span>
+                  <button className="btn btn-warning" type="button" onClick={ () => this.handleFinalize() }>Finalize Auction</button>&nbsp;
+                </span>
+              }
+              <button className="btn btn-info" type="button" onClick={ () => this.setState( {currentAuction: null} )}>Back</button>&nbsp;
+              <div>Current account: {this.state.currentAccount}</div>
+              <div>Contract address: {this.state.currentAuction.address}</div>
+            </div>
           </div>
         </div>
       );
@@ -425,41 +438,65 @@ class App extends Component {
       return (
         <div className="Auction">
           <AuctionTitle title="Auction" />
-          <h2>{ this.state.currentAuction.title || "No title" }</h2>
-          <div className="row" style={{paddingBottom: "50px"}}>
-          {this.state.currentAuction.ipfsHashes.map(imageHash => (
-            <div className="col-md-4" key={imageHash} >
-              <img style={{width: "100%", maxWidth: "300px"}} className="img-responsive" src={imageHash} alt={imageHash}/>
-            </div> 
-          ))}
-          </div>
-          <div className="mb-3 mt-3">{ this.state.currentAuction.description }</div>
-          
-          <div className="mb-3 mt-3">End: { this.state.currentAuction.endDate.toString() }</div>
-          { this.state.currentAuction.highestBindingBid > 0 &&
-            <div>Highest bid: {this.web3.utils.fromWei(this.state.currentAuction.highestBindingBid)} ETH from {this.state.currentAuction.highestBidder}</div>
-          }
-          { this.state.currentAuction.canBid &&
-            <div className="mb-3 mt-3">
-              <label className="form-label">Bid (in ETH):</label>
-              <input className="form-control" placeholder="Enter your bid in ETH" type="text" id="abid" name="abid" onChange={this.handleInputChange} value={ this.state.abid } />
-              <button className="btn btn-primary" type="button" onClick={ () => this.handleBid() }>Place Bid</button><br/>
+          <div style={{marginLeft: 25 + "px"}}>
+            <h2>{ this.state.currentAuction.title || "No title" }</h2>
+            <div className="row" style={{paddingBottom: "50px"}}>
+            {this.state.currentAuction.ipfsHashes.map(imageHash => (
+              <div className="col-md-4" key={imageHash} >
+                <img style={{width: "100%", maxWidth: "300px"}} className="img-responsive" src={imageHash} alt={imageHash}/>
+              </div> 
+            ))}
             </div>
-          }
-          <div className="mb-3 mt-3">
-            { this.state.currentAuction.canFinalize &&
-              <span>
-                <button className="btn btn-warning" type="button" onClick={ () => this.handleFinalize() }>Finalize Auction</button>&nbsp;
-              </span>
+            <div className="mb-3 mt-3">{ this.state.currentAuction.description }</div>
+            
+            <div className="mb-3 mt-3">End: { this.state.currentAuction.endDate.toString() }</div>
+            { this.state.currentAuction.highestBindingBid > 0 &&
+              <div>Highest bid: {this.web3.utils.fromWei(this.state.currentAuction.highestBindingBid)} ETH from {this.state.currentAuction.highestBidder}</div>
             }
-            <button className="btn btn-info" type="button" onClick={ () => this.setState( {currentAuction: null} )}>Back</button>&nbsp;
-            <div>Current account: {this.state.currentAccount}</div>
-            <div>Contract address: {this.state.currentAuction.address}</div>
+            { (this.state.currentAuction.state == 1) &&
+              <div className="mb-3 mt-3">
+                <label className="form-label">Bid (in ETH):</label>
+                <input className="form-control" placeholder="Enter your bid in ETH" type="number" step="any" id="abid" name="abid" onChange={this.handleInputChange} value={ this.state.abid } />
+                <button className="btn btn-primary" type="button" onClick={ () => this.handleBid() }>Place Bid</button><br/>
+              </div>
+            }
+            <div className="mb-3 mt-3">
+              { this.state.currentAuction.state >= 2 &&
+                <span>
+                  <button className="btn btn-warning" type="button" onClick={ () => this.handleFinalize() }>Finalize Auction</button>&nbsp;
+                </span>
+              }
+              <button className="btn btn-info" type="button" onClick={ () => this.setState( {currentAuction: null} )}>Back</button>&nbsp;
+              <div>Current account: {this.state.currentAccount}</div>
+              <div>Contract address: {this.state.currentAuction.address}</div>
+            </div>
           </div>
         </div>
       );
     }
   }
+
 }
+
+
+
+var formatedLeftTime = (endDate) => {
+  var now  = new Date();
+  var LeftMs = moment(endDate, "DD/MM/YYYY HH:mm:ss").diff(moment(now, "DD/MM/YYYY HH:mm:ss"));
+  var dur = moment.duration(LeftMs);
+  if (LeftMs < 0){ //Check if auction isn't running
+    return null;
+  }
+  else if(LeftMs < 60*60*1000){ //Check if left time is under 1 hour
+    return dur.format("m[m] s[s]");
+  }
+  else if (LeftMs < 24*60*60*1000){ //Check if left time is under 1 day
+    return dur.format("h[h] m[m]");
+  }
+  else{
+    return dur.format("d[d] h[h]");
+  } 
+}
+
 
 export default App;
